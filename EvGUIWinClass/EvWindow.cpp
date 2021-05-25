@@ -1,5 +1,5 @@
 #include "EvWindow.h"
-
+#include "MemoryManager.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
