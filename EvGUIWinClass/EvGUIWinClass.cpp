@@ -2,7 +2,7 @@
 #include <string.h>
 #include "EvWindow.h"
 
-
+static HINSTANCE my_hinstance;
 
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
@@ -12,6 +12,7 @@ int CALLBACK WinMain(
 {
 	try
 	{
+		my_hinstance = hInstance;
 		EvWindow* main_window = new EvWindow(hInstance);
 
 		main_window->EvShowWindow(nCmdShow);
