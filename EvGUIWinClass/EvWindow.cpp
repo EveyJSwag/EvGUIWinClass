@@ -8,7 +8,7 @@ static BOOL redraw_time = FALSE;
 
 static std::string app_title = "NEOGEO Color Reader";
 
-callback_structure EvWindow::overlord_callback_array[3];
+callback_structure EvWindow::overlord_callback_array[4];
 
 //
 // EvWindow
@@ -66,8 +66,9 @@ EvWindow::EvWindow(HINSTANCE hInstance)
 
 	RECT file_button_pos = out_rect;
 	RECT test_button_pos = out_rect;
+	RECT write_memory_pos = out_rect;
 	file_button_pos.left = out_rect.left + 5;
-	file_button_pos.bottom = out_rect.bottom - 55;
+	file_button_pos.bottom = out_rect.bottom;
 
 	file_select_button = new EvButton(
 		d_hwnd, 
@@ -84,22 +85,25 @@ EvWindow::EvWindow(HINSTANCE hInstance)
 
 	EvErrorMsgArea::set_error_message("OH BOY", d_hwnd);
 
-	stupid_test_button = new EvButton(
-		d_hwnd,
-		hInstance,
-		test_button_pos,
-		EvWindow::DUMB_BUTTON,
-		"Test Button",
-		this);
-
-	stupid_test_button->add_callback(stupid_test_callback);
-
 	edit_control = new EvEditControl(
 		d_hwnd,
 		hInstance,
 		out_rect,
 		EvWindow::MEMORY_ENTRY,
 		this);
+
+	write_memory_pos.bottom = out_rect.bottom - 50;
+	write_memory_pos.right = out_rect.right - 125;
+
+	write_memory_button = new EvButton(
+		d_hwnd,
+		hInstance,
+		write_memory_pos,
+		EvWindow::WRITE_MEMORY_BUTTON,
+		"Write to memory",
+		this);
+
+	write_memory_button->add_callback(write_memory_callback);
 
 	// left
 	// top
@@ -175,6 +179,19 @@ void EvWindow::stupid_test_callback(void* object_reference1, void* object_refere
 	EvErrorMsgArea::set_error_message("LOL", window_reference->GetHwnd());
 }
 
+
+void EvWindow::write_memory_callback(void* object_reference1, void* object_reference2)
+{
+	EvWindow::EvButton* button_reference = (EvWindow::EvButton*)object_reference1;
+	EvWindow* window_reference = (EvWindow*)object_reference2;
+	if (window_reference->edit_control->get_entry_text().size() > 0)
+	{
+		EvErrorMsgArea::set_error_message(
+			window_reference->edit_control->get_entry_text().c_str(),
+			window_reference->GetHwnd());
+	}
+}
+
 void EvWindow::call_overlord_function(app_widgets id_index)
 {
 	callback_structure callback_entry = overlord_callback_array[id_index-15];
@@ -246,40 +263,7 @@ EvWindow::d_WndProc(
 	
 	case WM_PAINT:
 
-		hdc = BeginPaint(hWnd, &ps);
-
-		HFONT old_font;
-
-		old_font = {0};
-
-		GetClientRect(
-			hWnd, 
-			&out_rect);
-
-		error_message_area->display(hdc);
-
-		LPSTR test_msg;
-		test_msg = (char*)"test";
-
-		error_message_area->display_message();
-
-		COORD title_pos;
-		title_pos.X = out_rect.top;
-		title_pos.Y = 
-			(out_rect.right / 2) - app_title.size() - 30;
-
-		TextOut(
-			hdc,
-			title_pos.Y, 
-			title_pos.X,
-			app_title.c_str(), 
-			app_title.size());
-
-		file_select_button->set_position(out_rect);
-		
-		 //edit_control->set_position(out_rect);
-		
-		EndPaint(hWnd, &ps);
+		paint_widgets(hWnd);
 
 		break;
 
@@ -302,6 +286,75 @@ EvWindow::d_WndProc(
 	}
 	return 0;
 	
+}
+
+void EvWindow::paint_widgets(HWND hWnd)
+{
+	PAINTSTRUCT ps;
+	HDC hdc;
+	RECT out_rect = { 0 };
+	RECT rect = { 0 };
+	HFONT test_font;
+	hdc = BeginPaint(hWnd, &ps);
+
+	test_font = CreateFont(
+		18, 
+		0, 
+		0, 
+		0, 
+		FW_DONTCARE, 
+		FALSE, 
+		FALSE, 
+		FALSE, 
+		DEFAULT_CHARSET, 
+		OUT_OUTLINE_PRECIS, 
+		CLIP_DEFAULT_PRECIS, 
+		CLEARTYPE_QUALITY, 
+		VARIABLE_PITCH, 
+		TEXT("IMPACT"));
+
+	SelectObject(hdc, test_font);
+
+	SetRect(&rect, 100, 100, 700, 200);
+	SetTextColor(hdc, RGB(0, 100, 0));
+	DrawText(hdc, TEXT("Drawing Text with Impact"), -1, &rect, DT_NOCLIP);
+
+	GetClientRect(
+		hWnd,
+		&out_rect);
+
+	error_message_area->display(hdc);
+	error_message_area->display_message();
+
+	COORD title_pos;
+	title_pos.X = out_rect.top;
+	title_pos.Y =
+		(out_rect.right / 2) - app_title.size() - 30;
+
+	TextOut(
+		hdc,
+		title_pos.Y,
+		title_pos.X,
+		app_title.c_str(),
+		app_title.size());
+
+
+	RECT file_select_pos = out_rect;
+	file_select_pos.bottom = out_rect.bottom - 50;
+	file_select_pos.right = 0;
+	file_select_button->set_position(file_select_pos);
+
+	RECT write_memory_pos = out_rect;
+	write_memory_pos.bottom = out_rect.bottom - 50;
+	write_memory_pos.right = out_rect.right - 125;
+	write_memory_button->set_position(write_memory_pos);
+
+	RECT edit_control_pos = out_rect;
+	edit_control_pos.bottom = out_rect.bottom - 100;
+	edit_control_pos.right = out_rect.right - 125;
+	edit_control->set_position(edit_control_pos);
+
+	EndPaint(hWnd, &ps);
 }
 
 unsigned int EvWindow::EvFileDialog::instance_amount = 0;
@@ -408,9 +461,9 @@ EvWindow::EvButton::EvButton(
 		"BUTTON",
 		button_label,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHLIKE | BS_NOTIFY,
-		pos.left + 5,
-		pos.bottom - 55,
-		100,
+		pos.right,
+		pos.bottom,
+		125,
 		50,
 		parent_handle,
 		(HMENU)id,
@@ -444,8 +497,8 @@ EvWindow::EvButton::set_position(
 	windowpos_res = SetWindowPos(
 		d_button_hwnd, 
 		HWND_TOP, 
-		5, 
-		new_position.bottom - 55, 
+		new_position.right, 
+		new_position.bottom, 
 		0, 0, 
 		SWP_ASYNCWINDOWPOS | SWP_NOSIZE);
 }
@@ -483,7 +536,6 @@ EvWindow::EvEditControl::EvEditControl(
 
 	d_extra_data = extra_data;
 	d_id = id;
-
 }
 
 void
@@ -497,8 +549,8 @@ EvWindow::EvEditControl::set_position(
 	windowpos_res = SetWindowPos(
 		d_econtrol_hwnd,
 		HWND_TOP,
-		5,
-		new_position.bottom - 20,
+		new_position.right,
+		new_position.bottom,
 		20, 20,
 		SWP_ASYNCWINDOWPOS | SWP_NOSIZE);
 }
@@ -516,9 +568,8 @@ void EvWindow::EvEditControl::add_callback(
 std::string EvWindow::EvEditControl::get_entry_text()
 {
 	char current_text[100];
-	TCHAR test[] = "IM DUMB";
 	SendMessage(d_econtrol_hwnd, WM_GETTEXT, 100, (LPARAM)current_text);
-	d_entry_text = std::string((char*)current_text);
+	d_entry_text = std::string(current_text);
 	return d_entry_text;
 }
 

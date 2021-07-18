@@ -35,10 +35,11 @@ public:
 	{
 		FILE_BUTTON = 15,
 		MEMORY_ENTRY,
-		DUMB_BUTTON
+		DUMB_BUTTON,
+		WRITE_MEMORY_BUTTON
 	};
 
-	static callback_structure overlord_callback_array[3];
+	static callback_structure overlord_callback_array[4];
 
 	static void call_overlord_function(app_widgets id_index);
 
@@ -198,6 +199,10 @@ private:
 
 	static void stupid_test_callback(void* object_reference1, void* object_reference2);
 
+	static void write_memory_callback(void* object_reference1, void* object_reference2);
+
+	EvButton* write_memory_button;
+
 	EvEditControl* edit_control;
 	EvFileDialog* file_dialog_window;
 	EvBitmap* bitmap;
@@ -220,5 +225,5 @@ private:
 		UINT message, 
 		WPARAM wParam, LPARAM lParam);
 
-
+	void paint_widgets(HWND hWnd);
 };
